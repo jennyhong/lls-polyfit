@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Visualizing Polynomial Data Fitting</title>
+  <link href='http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css' rel='stylesheet'>
+  <link rel='stylesheet' href='range-slider.css' type='text/css' />
+  <link rel='stylesheet' href='polyfit.css' type='text/css' />
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+    });
+    </script>
+  <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body>
+  <div class='container'>
+    <div class='row col-xs-12'>
+      <h1>Visualizing Polynomial Data Fitting</h1>
+      <br/>
+    </div>
+    <div class='row'>
+      <div class='col-xs-7'>
+        <div class='content' id='scatterplot'></div>
+      </div>
+      <div class='col-xs-5'>
+        <div class='row'>
+          TODO: Briefly explain what polynomial data fitting is. Tell them that there is unseen test data.
+        </div>
+        <hr>
+        <div class='row'>
+        <h3 class='model-header'>Model</h3>
+        <div class='input'>Model polynomial degree</div>: <input id='model-degree' type='text' value='3'>
+        <br />
+        <br />
+        <a class='new-centroids btn btn-danger'>Generate fit</a>
+        </div>
+        <hr>
+        <div class='row'>
+          <h3 class='data-header'>Data</h3>
+          Less noise <div class='range-slider' id='range-slider'></div> More noise
+          <br />
+          <div class='input'>True polynomial degree</div>: <input id='degree' type='text' value='3'>
+          <br />
+          <br />
+          <a class='new-points btn btn-danger'>New points</a>
+          <br />
+          TODO: Add a button to reveal the test points?
+        </div>
+      </div>
+    </div>
+    <footer>
+      Made by <a href='http://www.stanford.edu/~jyunhong'>Jenny Hong</a> for <a href='http://ee103.stanford.edu/'>EE103</a>. Source code on <a href='https://github.com/jennyhong/lls-polyfit'>Github</a>.
+    </footer>
+  </div>
+  <script src='jquery-1.11.2.min.js'></script>
+  <script src='d3.min.js'></script>
+  <script src='range-slider.js'></script>
+  <script src='regression.js'></script>
+  <script src='Chart.min.js'></script>
+  <script src='polyfit.js'></script>
+</body>
+</html>

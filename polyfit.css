@@ -1,0 +1,72 @@
+html {
+  height: 100%;
+}
+
+body {
+  font-size: 16px;
+  background-color: #fcfcfc;
+  position: relative;
+  min-height: 100%;
+}
+
+.container {
+  min-width: 1100px;
+  min-height: 760px;
+}
+
+#scatterplot {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  height: 600px;
+  width: 600px;
+  border: 1px solid black;
+}
+
+#degree, #model-degree {
+  border: 0px;
+  border-bottom: 1px solid black;
+  padding-left: 8px;
+  width: 30px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  background-color: #fcfcfc;
+}
+
+a {
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.active {
+  /*color: #428bca;*/
+  background-color: #fcf9ce;
+  /*font-weight: bold;*/
+  cursor: pointer;
+  padding-right: 5px;
+}
+
+hr {
+  margin-top: 30px;
+  border-top: 1px solid #ccc;
+}
+
+.model-header .data-header {
+  margin-top: 0px;
+}
+
+div.input {
+  display: inline-block;
+}
+
+a.generate {
+  margin-left: 2px;
+}
+
+footer {
+  position: absolute;
+  font-size: 13px;
+  margin-bottom: 5px;
+  bottom: 0;
+  border-top: 1px solid #ccc;;
+  width: inherit;
+}
