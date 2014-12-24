@@ -7,6 +7,9 @@ $(function() {
   var $degree = $('#degree');
   var degree = parseInt($degree.val(), 4);
 
+  var $modelDegree = $('#degree');
+  var modelDegree = parseInt($modelDegree.val(), 4);
+
   var $rangeSlider = $('#range-slider');
   var $meanSquareValue = $('.mean-square-value');
 
@@ -20,8 +23,14 @@ $(function() {
     .attr('height', height)
     .attr('class', 'chart')
 
+  // the main object where the chart and axis will be drawn
+  var main = chart.append('g')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('class', 'main')   
+
   // Data
-  data = {
+  var data = {
     // These will be shown on the plot
     trainPoints : {
       xdata : [], 
@@ -70,6 +79,10 @@ $(function() {
       roots : roots,
       sign : sign,
       // Variance chosen arbitrarily, so the plot looks nice
+      // TODO: The y values span over a different range, so the variance doesn't
+      // always look the same when it's scaled to fit the plot. Should we keep it
+      // like this (for the sake of error), or should we scale for image
+      // consistency?
       variance : Math.sqrt(randomness) / 500 + 0.001
     };
   }
@@ -116,16 +129,17 @@ $(function() {
     // There is no signficance behind the constants except that they looked good
     // with the slider.
     var degree = parseInt($degree.val(), 4);
+    var randomness = parseInt($rangeSlider.val(), 30);
     var params = generateParameters(degree);
-    data.trainData = generateData(params, NUM_TRAIN_POINTS);
-    data.testData = generateData(params, NUM_TEST_POINTS, -5, 5);
+    data.trainPoints = generateData(params, NUM_TRAIN_POINTS);
+    data.testPoints = generateData(params, NUM_TEST_POINTS, -5, 5);
 
     $meanSquareValue.html('not yet calculated');
-    resetPlot(data.trainData.xdata, data.trainData.ydata);
+    resetPlot(data.trainPoints.xdata, data.trainPoints.ydata);
   }
 
   function resetPlot(xdata, ydata) {
-    chart.selectAll('*').remove();
+    main.selectAll('*').remove();
 
     // x and y scales
     var x = d3.scale.linear()
@@ -136,27 +150,91 @@ $(function() {
       .domain([d3.min(ydata), d3.max(ydata)])
       .range([ height, 0 ]);
 
-    // the main object where the chart and axis will be drawn
-    var main = chart.append('g')
-    .attr('width', width)
-    .attr('height', height)
-    .attr('class', 'main')   
-
     // draw the graph object
     var g = main.append("svg:g"); 
 
     g.selectAll("scatter-dots")
       .data(ydata)  // using the values in the ydata array
       .enter().append("svg:circle")  // create a new circle for each value
-          .attr("cy", function (d) { return y(d); } ) // translate y value to a pixel
-          .attr("cx", function (d,i) { return x(xdata[i]); } ) // translate x value
-          .attr("r", 2) // radius of circle
-          .style("opacity", 1.0); // opacity of circle
+      .attr("cy", function (d) { return y(d); } ) // translate y value to a pixel
+      .attr("cx", function (d,i) { return x(xdata[i]); } ) // translate x value
+      .attr("r", 2) // radius of circle
+      .style("opacity", 1.0); // opacity of circle
   }
+
+  function generateFit() {
+    console.log('generateFit');
+    var modelDegree = parseInt($modelDegree.val(), 4);
+    var A = getVandermonde(data.trainPoints.xdata, modelDegree);
+    console.log(data.trainPoints.xdata[0]);
+    console.log(A[0]);
+    var coefficients = backslash(A, data.trainPoints.ydata);
+    console.log(coefficients);
+    plotFit(coefficients);
+  }
+
+  function plotFit(coefficients) {
+    console.log('plotFit');
+    var xmin = d3.min(data.trainPoints.xdata);
+    var xmax = d3.max(data.trainPoints.xdata);
+    xdata = [];
+    ydata = [];
+    for (var x = xmin; x < xmax; x += 0.01) {
+      var y = 0;
+      for (var i = 0; i < coefficients.length; i++) {
+        y += coefficients[0] * Math.pow(x, i);
+      }
+      xdata.push(x);
+      ydata.push(y);
+    }
+    // x and y scales
+    var x = d3.scale.linear()
+      .domain([d3.min(xdata), d3.max(xdata)])  // the range of the values to plot
+      .range([ 0, width ]);        // the pixel range of the x-axis
+
+    var y = d3.scale.linear()
+      .domain([d3.min(ydata), d3.max(ydata)])
+      .range([ height, 0 ]);
+    
+    var lineFunction = d3.svg.line()
+        .x(function(d, i) { return x(xdata[i]); })
+        .y(function(d, i) { return y(ydata[i]); })
+        .interpolate("linear");
+    var lineGraph = main.append('path')
+        .attr('d', lineFunction(ydata))
+        .attr("stroke", "blue")
+        .attr("stroke-width", 2)
+        .attr("fill", "none");
+  }
+
+  function getVandermonde(xdata, degree) {
+    var A = [];
+    for (var i = 0; i < xdata.length; i++) {
+      var row = [];
+      for (var j = 0; j <= degree; j++) {
+        row.push(Math.pow(xdata[i], j));
+      }
+      A.push(row);
+    }
+    return A;
+  }
+
+  function backslash(A, b) {
+    // TODO: error checking (A is tall? no other types to rely on...)
+    var Atrans = numeric.transpose(A);
+    var gram = numeric.dot(Atrans, numeric.transpose(A));
+    var pseudoInv = numeric.dot(gram, numeric.transpose(A));
+    return numeric.dot(pseudoInv, b);
+  }
+
 
   // Helper functions
   $('.new-points').click(function() {
     resetPoints();
+  });
+
+  $('.generate-fit').click(function() {
+    generateFit();
   });
 
   // Normal random
