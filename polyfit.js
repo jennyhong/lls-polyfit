@@ -5,10 +5,10 @@ $(function() {
   var NUM_TEST_POINTS = 300;
 
   var $degree = $('#degree');
-  var degree = parseInt($degree.val(), 4);
+  var degree = parseInt($degree.val(), 5);
 
-  var $modelDegree = $('#degree');
-  var modelDegree = parseInt($modelDegree.val(), 4);
+  var $modelDegree = $('#model-degree');
+  var modelDegree = parseInt($modelDegree.val(), 3);
 
   var $rangeSlider = $('#range-slider');
   var $meanSquareValue = $('.mean-square-value');
@@ -92,7 +92,7 @@ $(function() {
     // is chosen arbitrarily, so the plot looks nice
     xmin = xmin || 0;
     xmax = xmax || 1;
-    var numPolynomialPoints = numPoints * (100 - 0.85 * randomness) / 100;
+    var numPolynomialPoints = Math.round(numPoints * (100 - 0.9 * randomness) / 100);
     var numNoisePoints = numPoints - numPolynomialPoints;
 
     var xdata = [];
@@ -163,18 +163,13 @@ $(function() {
   }
 
   function generateFit() {
-    console.log('generateFit');
     var modelDegree = parseInt($modelDegree.val(), 4);
     var A = getVandermonde(data.trainPoints.xdata, modelDegree);
-    console.log(data.trainPoints.xdata[0]);
-    console.log(A[0]);
     var coefficients = backslash(A, data.trainPoints.ydata);
-    console.log(coefficients);
     plotFit(coefficients);
   }
 
   function plotFit(coefficients) {
-    console.log('plotFit');
     var xmin = d3.min(data.trainPoints.xdata);
     var xmax = d3.max(data.trainPoints.xdata);
     xdata = [];
@@ -182,7 +177,7 @@ $(function() {
     for (var x = xmin; x < xmax; x += 0.01) {
       var y = 0;
       for (var i = 0; i < coefficients.length; i++) {
-        y += coefficients[0] * Math.pow(x, i);
+        y += coefficients[i] * Math.pow(x, i);
       }
       xdata.push(x);
       ydata.push(y);
@@ -208,6 +203,7 @@ $(function() {
   }
 
   function getVandermonde(xdata, degree) {
+    console.log('getVandermonde with degree ' + degree);
     var A = [];
     for (var i = 0; i < xdata.length; i++) {
       var row = [];
@@ -221,12 +217,17 @@ $(function() {
 
   function backslash(A, b) {
     // TODO: error checking (A is tall? no other types to rely on...)
-    var Atrans = numeric.transpose(A);
-    var gram = numeric.dot(Atrans, numeric.transpose(A));
-    var pseudoInv = numeric.dot(gram, numeric.transpose(A));
-    return numeric.dot(pseudoInv, b);
+    var gram = numeric.dot(numeric.transpose(A), A);
+    var pinvA = numeric.dot(numeric.inv(gram), numeric.transpose(A));
+    return numeric.dot(pinvA, b);
   }
 
+  // Used for debugging
+  function printArray(A) {
+    for (var i = 0; i < A.length; i++) {
+      console.log(A[i].join('\t'));
+    }
+  }
 
   // Helper functions
   $('.new-points').click(function() {
