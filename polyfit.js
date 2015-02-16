@@ -1,15 +1,13 @@
 $(function() {
 
   // Number of data points
-  var NUM_TRAIN_POINTS = 50;
-  var NUM_TEST_POINTS = 30;
+  var MAX_MODEL_DEGREE = parseInt($('#max-model-degree').text());
 
   var $degree = $('#degree');
   var degree = parseInt($degree.val(), 10);
 
   var $modelDegreeSlider = $('#model-degree-slider');
-  var $modelDegree = $('#model-degree');
-  var modelDegree = getDegreeFromModelSlider();
+  var modelDegree = 0;
 
   var $noiseSlider = $('#noise-slider');
   var $meanSquareValue = $('.mean-square-value');
@@ -79,8 +77,8 @@ $(function() {
     drag: function(value) {
       // Update the randomness after the user drags the slider
       // and reset the points to be clustered
-      randomness = modelDegree;
-      // resetPoints();
+      modelDegree = Math.round(MAX_MODEL_DEGREE * value / 100);
+      $('#model-degree-display').text(modelDegree);
     }
   });
 
@@ -153,21 +151,14 @@ $(function() {
     }
   }
 
-  function getDegreeFromModelSlider() {
-     var modelDegree = parseFloat($modelDegree.val(), 10);
-     return Math.round(8 * modelDegree / 100);
-  }
-
   function resetPoints() {
     // Arbitrarily chosen variance and percentageClusteredPoints
     // There is no signficance behind the constants except that they looked good
     // with the slider.
-    degree = parseInt($degree.val(), 10);
-    var randomness = parseInt($noiseSlider.val(), 10);
-    var params = generateParams(randomness);
-    console.log(params);
-    data.trainPoints = generateData(params, NUM_TRAIN_POINTS);
-    data.testPoints = generateData(params, NUM_TEST_POINTS);
+    var params = generateParams();
+    var numPoints = parseInt($('#num-points').val(), 10);
+    data.trainPoints = generateData(params, numPoints);
+    data.testPoints = generateData(params, numPoints);
 
     $meanSquareValue.html('not yet calculated');
     resetPlot(trainMain, data.trainPoints.xdata, data.trainPoints.ydata);
@@ -209,34 +200,34 @@ $(function() {
   }
 
   function generateFit() {
-    var modelDegree = getDegreeFromModelSlider();
     var A = getVandermonde(data.trainPoints.xdata, modelDegree);
     return backslash(A, data.trainPoints.ydata);
   }
 
-  function plotFit(coefficients) {
-    trainMain.selectAll('path.regression-path').remove();
-    var xmin = d3.min(data.trainPoints.xdata);
-    var xmax = d3.max(data.trainPoints.xdata);
-    xdata = [];
+  function plotFit(main, points, coefficients) {
+    main.selectAll('path.regression-path').remove();
+    var xmin = d3.min(points.xdata);
+    var xmax = d3.max(points.xdata);
+    var xdata = [];
     for (var x = xmin; x < xmax; x += 0.01) {
       xdata.push(x);
     }
-    ydata = yHat(xdata, coefficients);
+
+    var ydata = yHat(xdata, coefficients);
     // x and y scales
     var x = d3.scale.linear()
       .domain([d3.min(xdata), d3.max(xdata)])  // the range of the values to plot
       .range([ 0, width ]);        // the pixel range of the x-axis
 
     var y = d3.scale.linear()
-      .domain([d3.min(ydata), d3.max(ydata)])
+      .domain([d3.min(points.ydata), d3.max(points.ydata)])
       .range([ height, 0 ]);
     
     var lineFunction = d3.svg.line()
         .x(function(d, i) { return x(xdata[i]); })
         .y(function(d, i) { return y(ydata[i]); })
         .interpolate("linear");
-    var lineGraph = trainMain.append('path')
+    var lineGraph = main.append('path')
         .attr('class', 'regression-path')
         .attr('d', lineFunction(ydata))
         .attr("stroke", "blue")
@@ -245,12 +236,12 @@ $(function() {
   }
 
   function rmsError(coefficients, xdata, ydata) {
-    var yhat = yHat(x, coefficients);
+    var yhat = yHat(xdata, coefficients);
     var errors = numeric.sub(ydata, yhat);
     return numeric.norm2(errors) / Math.sqrt(xdata.length);
   }
 
-  function yHat(x, coefficients) {
+  function yHat(xdata, coefficients) {
     var A = getVandermonde(xdata, coefficients.length-1);
     return numeric.dot(A, coefficients);
   }
@@ -284,11 +275,16 @@ $(function() {
   // Helper functions
   $('.new-points').click(function() {
     resetPoints();
+    $('#train-err').text('N/A');
+    $('#test-err').text('N/A');
+
   });
 
   $('.generate-fit').click(function() {
     var coefficients = generateFit();
-    plotFit(coefficients);
+    console.log(coefficients);
+    plotFit(trainMain, data.trainPoints, coefficients);
+    plotFit(testMain, data.testPoints, coefficients);
     $('#train-err').text(rmsError(coefficients,
       data.trainPoints.xdata, data.trainPoints.ydata));
     $('#test-err').text(rmsError(coefficients,

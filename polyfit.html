@@ -28,30 +28,29 @@
       <div class='col-xs-3'>
       <a class='new-points btn btn-danger'>New data</a>
         <br />
-        Smooth <div class='range-slider' id='noise-slider'></div> Noisy
+        <div class='input'>Number of points</div>: <input id='num-points' type='text' value='25'>
         <br />
-        <div class='input'>Number of points</div>: <input id='degree' type='text' value='3'>
+        Smooth <div class='range-slider' id='noise-slider'></div> Noisy
         <br />
 
         <hr>
 
         <a class='generate-fit btn btn-success'>Fit model</a>
         <br />
-        <div class='input'>Degree</div>:
-        <!-- <input id='model-degree' type='text' value='3'> -->
-        1 <div class='range-slider' id='model-degree-slider'></div> 8
+        <div class='input'>Degree</div>: <span id='model-degree-display'></span>
         <br />
-        Root mean square error
-        <br />
-        Training data: <span id='train-err'>N/A</span>
-        <br />
-        Test data: <span id='test-err'>N/A</span>
-
+        0 <div class='range-slider' id='model-degree-slider'></div> <span id='max-model-degree'>8</span>
       </div>
       <div class='col-xs-4'>
-        <div class='content scatterplot' id='train-scatterplot'></div>
+        <br />
+        <center><b>Training data</b></center>
+        <center>Root mean square error: <span id='train-err'>N/A</span></center>
+        <div class='content scatterplot' id='train-scatterplot'></div> 
       </div>
       <div class='col-xs-4'>
+        <br />
+        <center><b>Testing data</b></center>
+        <center>Root mean square error: <span id='test-err'>N/A</span></center>
         <div class='content scatterplot' id='test-scatterplot'></div>
       </div>
     </div>

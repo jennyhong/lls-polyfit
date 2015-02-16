@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-  min-width: 800px;
+  min-width: 1200px;
   min-height: 640px;
 }
 
@@ -22,7 +22,7 @@ body {
   /*border: 1px solid black;*/
 }
 
-#degree, #model-degree {
+#num-points {
   border: 0px;
   border-bottom: 1px solid black;
   padding-left: 8px;
