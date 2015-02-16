@@ -1,31 +1,46 @@
 $(function() {
 
   // Number of data points
-  var NUM_TRAIN_POINTS = 500;
-  var NUM_TEST_POINTS = 300;
+  var NUM_TRAIN_POINTS = 50;
+  var NUM_TEST_POINTS = 30;
 
   var $degree = $('#degree');
   var degree = parseInt($degree.val(), 10);
 
+  var $modelDegreeSlider = $('#model-degree-slider');
   var $modelDegree = $('#model-degree');
-  var modelDegree = parseInt($modelDegree.val(), 10);
+  var modelDegree = getDegreeFromModelSlider();
 
-  var $rangeSlider = $('#range-slider');
+  var $noiseSlider = $('#noise-slider');
   var $meanSquareValue = $('.mean-square-value');
 
   var margin = {top: 0, right: 0, bottom: 20, left: 40}
-  var width = $('#scatterplot').width() - margin.left - margin.right;
+  var width = $('#train-scatterplot').width() - margin.left - margin.right;
   var height = width - margin.top - margin.bottom;
 
   // the chart object, includes all margins
-  var chart = d3.select('#scatterplot')
+  var trainChart = d3.select('#train-scatterplot')
     .append('svg:svg')
     .attr('width', width + margin.right + margin.left)
     .attr('height', height + margin.top + margin.bottom)
     .attr('class', 'chart')
 
   // the main object where the chart and axis will be drawn
-  var main = chart.append('g')
+  var trainMain = trainChart.append('g')
+    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('class', 'main')   
+
+    // the chart object, includes all margins
+  var testChart = d3.select('#test-scatterplot')
+    .append('svg:svg')
+    .attr('width', width + margin.right + margin.left)
+    .attr('height', height + margin.top + margin.bottom)
+    .attr('class', 'chart')
+
+  // the main object where the chart and axis will be drawn
+  var testMain = testChart.append('g')
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
     .attr('width', width)
     .attr('height', height)
@@ -49,7 +64,7 @@ $(function() {
   // 0 means data is exactly polynomial
   var randomness = 30;
 
-  rangeSlider($rangeSlider[0], {
+  rangeSlider($noiseSlider[0], {
     value: randomness,
     drag: function(value) {
       // Update the randomness after the user drags the slider
@@ -59,34 +74,45 @@ $(function() {
     }
   });
 
-  // Parameters shared in generating training and testing data
-  // Generate random roots between 0 and 1, and generate a sign
-  // Instead of randomly generating the coefficients, generating the roots
-  // guarantees that the graph will "look like a polynomial"
-  // for our range of training x values (ie. [0, 1])
-  function generateParameters(degree) {
-    var roots = [];
-    for (var t = 0; t < degree; t++) {
-      r = Math.random();
-      if (Math.random() > 0.95) {
-        r *= -1;
-      }
-      roots.push(r);
+  rangeSlider($modelDegreeSlider[0], {
+    value: modelDegree,
+    drag: function(value) {
+      // Update the randomness after the user drags the slider
+      // and reset the points to be clustered
+      randomness = modelDegree;
+      // resetPoints();
     }
-    var sign = 1;
-    if (Math.random() > 0.5) {
-      sign = -1;
+  });
+
+  function generateParams() {
+    var K = 3;
+    var a = [];
+    var w = [];
+    var theta = [];
+    var sign = Math.random() > 0.5 ? 1 : -1
+    for (var i = 0; i < K; i++) {
+      a.push(Math.random());
+      w.push(Math.random());
+      theta.push(Math.random());
     }
     return {
-      roots : roots,
+      K : K,
+      a : a,
+      w : w,
+      theta : theta,
       sign : sign,
-      // Variance chosen arbitrarily, so the plot looks nice
-      // TODO: The y values span over a different range, so the variance doesn't
-      // always look the same when it's scaled to fit the plot. Should we keep it
-      // like this (for the sake of error), or should we scale for image
-      // consistency?
       variance : Math.pow(randomness, 1) / 500
-    };
+    }
+  }
+
+  function normalizeList(data) {
+    var min = d3.min(data);
+    var max = d3.max(data);
+    result = [];
+    for (var i = 0; i < data.length; i++) {
+      result.push((data[i] - min) / (max - min));
+    }
+    return result;
   }
 
   function generateData(params, numPoints, xmin, xmax) {
@@ -94,31 +120,31 @@ $(function() {
     // is chosen arbitrarily, so the plot looks nice
     xmin = xmin || 0;
     xmax = xmax || 1;
-    // var numPolynomialPoints = Math.round(numPoints * (100 - 0.9 * randomness) / 100);
-    var numPolynomialPoints = numPoints;
-    var numNoisePoints = numPoints - numPolynomialPoints;
 
     var xdata = [];
     var ydata = [];
 
     // Generate the points
-    for (var i = 0; i < numPolynomialPoints; i++) {
+    // y = sum_{i=1}^K e^{a_i t} cos (w_i t + theta_i)
+    for (var i = 0; i < numPoints; i++) {
       x = Math.random() * (xmax - xmin) + xmin;
-      y = params.sign;
-      for (var t = 0; t < degree; t++) {
-        y *= x - params.roots[t]
-      }
-      y += random_normal(0, params.variance);
       xdata.push(x);
+
+      y = 0;
+      for (var j = 0; j < params.K; j++) {
+        y += Math.exp(params.a[j] * x) * Math.cos(params.w[j] * x + params.theta[j]);
+      }
+      y *= params.sign;
       ydata.push(y);
     }
 
-    var ymax = d3.max(ydata);
-    var ymin = d3.min(ydata);
-
-    for (var i = 0; i < numNoisePoints; i++) {
-      xdata.push(Math.random() * (xmax - xmin) + xmin);
-      ydata.push(Math.random() * (ymax - ymin) + ymin);
+    ydata = normalizeList(ydata);
+    console.log(ydata);
+    for (var i = 0; i < ydata.length; i++) {
+      // Hard coded translation from "randomness" on the slider to the variance
+      ydata[i] += random_normal(0, params.variance);
+      ydata[i] = Math.max(ydata[i], 0);
+      ydata[i] = Math.min(ydata[i], 1);
     }
 
     return {
@@ -127,21 +153,28 @@ $(function() {
     }
   }
 
+  function getDegreeFromModelSlider() {
+     var modelDegree = parseFloat($modelDegree.val(), 10);
+     return Math.round(8 * modelDegree / 100);
+  }
+
   function resetPoints() {
     // Arbitrarily chosen variance and percentageClusteredPoints
     // There is no signficance behind the constants except that they looked good
     // with the slider.
     degree = parseInt($degree.val(), 10);
-    var randomness = parseInt($rangeSlider.val(), 10);
-    var params = generateParameters(degree);
+    var randomness = parseInt($noiseSlider.val(), 10);
+    var params = generateParams(randomness);
+    console.log(params);
     data.trainPoints = generateData(params, NUM_TRAIN_POINTS);
-    data.testPoints = generateData(params, NUM_TEST_POINTS, -5, 5);
+    data.testPoints = generateData(params, NUM_TEST_POINTS);
 
     $meanSquareValue.html('not yet calculated');
-    resetPlot(data.trainPoints.xdata, data.trainPoints.ydata);
+    resetPlot(trainMain, data.trainPoints.xdata, data.trainPoints.ydata);
+    resetPlot(testMain, data.testPoints.xdata, data.testPoints.ydata);
   }
 
-  function resetPlot(xdata, ydata) {
+  function resetPlot(main, xdata, ydata) {
     main.selectAll('*').remove();
 
     // x and y scales
@@ -165,6 +198,7 @@ $(function() {
     // draw the graph object
     var g = main.append("svg:g"); 
 
+    // console.log(ydata);
     g.selectAll("scatter-dots")
       .data(ydata)  // using the values in the ydata array
       .enter().append("svg:circle")  // create a new circle for each value
@@ -175,25 +209,20 @@ $(function() {
   }
 
   function generateFit() {
-    var modelDegree = parseInt($modelDegree.val(), 10);
+    var modelDegree = getDegreeFromModelSlider();
     var A = getVandermonde(data.trainPoints.xdata, modelDegree);
     return backslash(A, data.trainPoints.ydata);
   }
 
   function plotFit(coefficients) {
-    main.selectAll('path.regression-path').remove();
+    trainMain.selectAll('path.regression-path').remove();
     var xmin = d3.min(data.trainPoints.xdata);
     var xmax = d3.max(data.trainPoints.xdata);
     xdata = [];
-    ydata = [];
     for (var x = xmin; x < xmax; x += 0.01) {
-      var y = 0;
-      for (var i = 0; i < coefficients.length; i++) {
-        y += coefficients[i] * Math.pow(x, i);
-      }
       xdata.push(x);
-      ydata.push(y);
     }
+    ydata = yHat(xdata, coefficients);
     // x and y scales
     var x = d3.scale.linear()
       .domain([d3.min(xdata), d3.max(xdata)])  // the range of the values to plot
@@ -207,7 +236,7 @@ $(function() {
         .x(function(d, i) { return x(xdata[i]); })
         .y(function(d, i) { return y(ydata[i]); })
         .interpolate("linear");
-    var lineGraph = main.append('path')
+    var lineGraph = trainMain.append('path')
         .attr('class', 'regression-path')
         .attr('d', lineFunction(ydata))
         .attr("stroke", "blue")
@@ -216,10 +245,14 @@ $(function() {
   }
 
   function rmsError(coefficients, xdata, ydata) {
-    var A = getVandermonde(xdata, coefficients.length-1);
-    var yhat = numeric.dot(A, coefficients);
+    var yhat = yHat(x, coefficients);
     var errors = numeric.sub(ydata, yhat);
     return numeric.norm2(errors) / Math.sqrt(xdata.length);
+  }
+
+  function yHat(x, coefficients) {
+    var A = getVandermonde(xdata, coefficients.length-1);
+    return numeric.dot(A, coefficients);
   }
 
   function getVandermonde(xdata, degree) {

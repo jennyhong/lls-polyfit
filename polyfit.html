@@ -14,47 +14,58 @@
 </head>
 <body>
   <div class='container'>
-    <div class='row col-xs-12'>
-      <h1>Visualizing Polynomial Data Fitting</h1>
+
+    <div class='row col-xs-10'>
+      <h1>Polynomial Data Fitting</h1>
       <br/>
-    </div>
-    <div class='row'>
-      <div class='col-xs-5'>
-        <div class='row'>
+      <!-- We should link to a page with an explanation: We get two sets of data points called train and test. We use the training data to fit a polynomial of a given degree by least squares. We evaluate the polynomial on the test data. If the test error is much bigger than the trianing error, you have overfit. The polynomial degree is too high. If they're about the same, then ______ -->
+      <!--       <div class='col-xs-4'>
         We can estimate data using a function of the form $f(x) = \theta_0 + \theta_1 x + \ldots + \theta_n x^n$. Here, the parameters $\theta_0, \ldots, \theta_n$ are estimated using least-squares data fitting. In this visualization, you choose the polynomial degree $n$, and the model is evaluated on a training data set (shown to the left) and a testing data set (not shown).
-        </div>
-        <hr>
-        <div class='row'>
-        <h3 class='model-header'>Model</h3>
-        <!-- TODO: Maybe a slider here instead? Typing in 3, 4, 
-        etc. has been pretty annoying -->
-        <div class='input'>Model polynomial degree</div>: <input id='model-degree' type='text' value='3'>
+      </div> -->
+    </div>
+
+    <div class='row col-s-11'>
+      <div class='col-xs-3'>
+      <a class='new-points btn btn-danger'>New data</a>
         <br />
-        <a class='generate-fit btn btn-danger'>Generate fit</a>
+        Smooth <div class='range-slider' id='noise-slider'></div> Noisy
+        <br />
+        <div class='input'>Number of points</div>: <input id='degree' type='text' value='3'>
+        <br />
+
+        <hr>
+
+        <a class='generate-fit btn btn-success'>Fit model</a>
+        <br />
+        <div class='input'>Degree</div>:
+        <!-- <input id='model-degree' type='text' value='3'> -->
+        1 <div class='range-slider' id='model-degree-slider'></div> 8
         <br />
         Root mean square error
         <br />
         Training data: <span id='train-err'>N/A</span>
         <br />
         Test data: <span id='test-err'>N/A</span>
-        </div>
-        <hr>
-        <div class='row'>
-          <h3 class='data-header'>Data</h3>
-          Less noise <div class='range-slider' id='range-slider'></div> More noise
-          <br />
-          <div class='input'>True polynomial degree</div>: <input id='degree' type='text' value='3'>
-          <br />
-          <a class='new-points btn btn-danger'>New points</a>
-          <br />
-          <!-- TODO: Add a button to reveal the test points? -->
-        </div>
-      </div>
 
-       <div class='col-xs-7'>
-        <div class='content' id='scatterplot'></div>
+      </div>
+      <div class='col-xs-4'>
+        <div class='content scatterplot' id='train-scatterplot'></div>
+      </div>
+      <div class='col-xs-4'>
+        <div class='content scatterplot' id='test-scatterplot'></div>
       </div>
     </div>
+
+    <div class='row col-xs-10'>
+      <div class='col-xs-5'>
+        
+      </div>
+      <div class='col-xs-5'>
+        
+      </div>
+      
+    </div>
+  </div>
     <footer>
       Made by <a href='http://www.stanford.edu/~jyunhong'>Jenny Hong</a> for <a href='http://ee103.stanford.edu/'>EE103</a>. Source code on <a href='https://github.com/jennyhong/lls-polyfit'>Github</a>.
     </footer>

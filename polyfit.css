@@ -14,11 +14,11 @@ body {
   min-height: 640px;
 }
 
-#scatterplot {
+.scatterplot {
   margin-top: 5px;
   margin-bottom: 5px;
-  height: 500px;
-  width: 500px;
+  height: 350px;
+  width: 350px;
   /*border: 1px solid black;*/
 }
 
