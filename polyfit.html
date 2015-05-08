@@ -22,25 +22,12 @@
       <!--       <div class='col-xs-4'>
         We can estimate data using a function of the form $f(x) = \theta_0 + \theta_1 x + \ldots + \theta_n x^n$. Here, the parameters $\theta_0, \ldots, \theta_n$ are estimated using least-squares data fitting. In this visualization, you choose the polynomial degree $n$, and the model is evaluated on a training data set (shown to the left) and a testing data set (not shown).
       </div> -->
+      <!-- A polynomial of fixed degree is fit using the training data. We judge the model by its ability to predict the test set. -->
     </div>
 
-    <div class='row col-s-11'>
-      <div class='col-xs-3'>
-      <a class='new-points btn btn-danger'>New data</a>
-        <br />
-        <div class='input'>Number of points</div>: <input id='num-points' type='text' value='25'>
-        <br />
-        Smooth <div class='range-slider' id='noise-slider'></div> Noisy
-        <br />
+    
 
-        <hr>
-
-        <a class='generate-fit btn btn-success'>Fit model</a>
-        <br />
-        <div class='input'>Degree</div>: <span id='model-degree-display'></span>
-        <br />
-        0 <div class='range-slider' id='model-degree-slider'></div> <span id='max-model-degree'>8</span>
-      </div>
+    <div class='row col-s-13'>
       <div class='col-xs-4'>
         <br />
         <center><b>Training data</b></center>
@@ -53,17 +40,32 @@
         <center>Root mean square error: <span id='test-err'>N/A</span></center>
         <div class='content scatterplot' id='test-scatterplot'></div>
       </div>
+
+      <div class='col-xs-4'>
+        <br />
+        <center><b>Root mean square errors vs. degree</b></center>
+        <div class='content scatterplot' id='errors-plot'></div>
+      </div>
     </div>
 
-    <div class='row col-xs-10'>
-      <div class='col-xs-5'>
-        
+    <div class='row'>
+      <div class='col-xs-3'>
+        <div class='input'>Number of points</div>: <input id='num-points' type='text' value='25'>
+        <br />
+        Noise <div class='range-slider' id='noise-slider'></div>
+        <br />
+        <a class='new-points btn btn-danger'>New data</a>
       </div>
-      <div class='col-xs-5'>
-        
+
+      <div class='col-xs-3'>
+        <div class='input'>Degree</div>: <span id='model-degree-display'>0</span>
+        <br />
+        <a class='btn btn-success' id='increment-degree'>&#x25B2;</a>
+        <a class='btn btn-success' id='decrement-degree'>&#x25BC;</a>
+        </div>
       </div>
-      
     </div>
+
   </div>
     <footer>
       Made by <a href='http://www.stanford.edu/~jyunhong'>Jenny Hong</a> for <a href='http://ee103.stanford.edu/'>EE103</a>. Source code on <a href='https://github.com/jennyhong/lls-polyfit'>Github</a>.
@@ -71,6 +73,7 @@
   </div>
   <script src='jquery-1.11.2.min.js'></script>
   <script src='d3.min.js'></script>
+  <script src='jquery.flot.js'></script>
   <script src='range-slider.js'></script>
   <script src='numeric-1.2.6.min.js'></script>
   <script src='polyfit.js'></script>

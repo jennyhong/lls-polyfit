@@ -1,16 +1,15 @@
 $(function() {
 
   // Number of data points
-  var MAX_MODEL_DEGREE = parseInt($('#max-model-degree').text());
+  var MAX_MODEL_DEGREE = 8;
 
   var $degree = $('#degree');
   var degree = parseInt($degree.val(), 10);
 
-  var $modelDegreeSlider = $('#model-degree-slider');
   var modelDegree = 0;
+  $('#decrement-degree').attr('disabled', 'disabled');
 
   var $noiseSlider = $('#noise-slider');
-  var $meanSquareValue = $('.mean-square-value');
 
   var margin = {top: 0, right: 0, bottom: 20, left: 40}
   var width = $('#train-scatterplot').width() - margin.left - margin.right;
@@ -42,7 +41,9 @@ $(function() {
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
     .attr('width', width)
     .attr('height', height)
-    .attr('class', 'main')   
+    .attr('class', 'main')
+
+  var errorsPlot = $('#errors-plot');
 
   // Data
   var data = {
@@ -58,6 +59,11 @@ $(function() {
     }
   }
 
+  var errors = {
+    trainErrors : [],
+    testErrors : [],
+  }
+
   // Initial noise. This is what the slider is set to.
   // 0 means data is exactly polynomial
   var randomness = 30;
@@ -68,19 +74,11 @@ $(function() {
       // Update the randomness after the user drags the slider
       // and reset the points to be clustered
       randomness = value;
-      resetPoints();
+      // resetPoints();
     }
   });
 
-  rangeSlider($modelDegreeSlider[0], {
-    value: modelDegree,
-    drag: function(value) {
-      // Update the randomness after the user drags the slider
-      // and reset the points to be clustered
-      modelDegree = Math.round(MAX_MODEL_DEGREE * value / 100);
-      $('#model-degree-display').text(modelDegree);
-    }
-  });
+  resetPoints();
 
   function generateParams() {
     var K = 3;
@@ -90,7 +88,7 @@ $(function() {
     var sign = Math.random() > 0.5 ? 1 : -1
     for (var i = 0; i < K; i++) {
       a.push(Math.random());
-      w.push(Math.random());
+      w.push(Math.random() * 10);
       theta.push(Math.random());
     }
     return {
@@ -137,7 +135,7 @@ $(function() {
     }
 
     ydata = normalizeList(ydata);
-    console.log(ydata);
+    // console.log(ydata);
     for (var i = 0; i < ydata.length; i++) {
       // Hard coded translation from "randomness" on the slider to the variance
       ydata[i] += random_normal(0, params.variance);
@@ -159,10 +157,16 @@ $(function() {
     var numPoints = parseInt($('#num-points').val(), 10);
     data.trainPoints = generateData(params, numPoints);
     data.testPoints = generateData(params, numPoints);
+    errors = {
+      trainErrors : [],
+      testErrors : [],
+    }
 
-    $meanSquareValue.html('not yet calculated');
     resetPlot(trainMain, data.trainPoints.xdata, data.trainPoints.ydata);
     resetPlot(testMain, data.testPoints.xdata, data.testPoints.ydata);
+
+    modelDegree = 0;
+    updateModelDegree();
   }
 
   function resetPlot(main, xdata, ydata) {
@@ -170,11 +174,13 @@ $(function() {
 
     // x and y scales
     var x = d3.scale.linear()
-      .domain([d3.min(xdata), d3.max(xdata)])  // the range of the values to plot
+      .domain([0, 1])
+      // .domain([d3.min(xdata), d3.max(xdata)])  // the range of the values to plot
       .range([ 0, width ]);        // the pixel range of the x-axis
 
     var y = d3.scale.linear()
-      .domain([d3.min(ydata), d3.max(ydata)])
+      .domain([0, 1])
+      // .domain([d3.min(ydata), d3.max(ydata)])
       .range([ height, 0 ]);
 
     var xAxis = d3.svg.axis().scale(x).orient('bottom');
@@ -197,6 +203,43 @@ $(function() {
       .attr("cx", function (d,i) { return x(xdata[i]); } ) // translate x value
       .attr("r", 2) // radius of circle
       .style("opacity", 1.0); // opacity of circle
+  }
+
+  function updateErrorsPlot() {
+    console.log(errors);
+    var trainErrorsData = getErrorsData(errors.trainErrors);
+    var testErrorsData = getErrorsData(errors.testErrors);
+    var data = [
+      {
+        label: "Train",
+        data: trainErrorsData
+      },
+      { 
+        label: "Test",
+        data: testErrorsData
+      }
+    ];
+    var options = {
+      series: {
+        lines: { show: true, fill: false },
+        points: { show: true, fill: false }
+      },
+      xaxis: {
+        min: 0,
+        max: MAX_MODEL_DEGREE
+      }
+    };
+    var plot = $.plot(errorsPlot, data, options)
+  }
+
+  function getErrorsData(errors) {
+    errorsData = [];
+    for (var i = 0; i < errors.length; i++) {
+      if (errors[i] != undefined) {
+        errorsData.push([i, errors[i]]);
+      }
+    }
+    return errorsData;
   }
 
   function generateFit() {
@@ -277,23 +320,55 @@ $(function() {
     resetPoints();
     $('#train-err').text('N/A');
     $('#test-err').text('N/A');
-
   });
 
-  $('.generate-fit').click(function() {
+  $('#increment-degree').click(function() {
+    if (modelDegree < MAX_MODEL_DEGREE) {
+      $('#decrement-degree').removeAttr('disabled');
+      modelDegree += 1;
+      updateModelDegree();
+    }
+    if (modelDegree == MAX_MODEL_DEGREE) {
+      $('#increment-degree').attr('disabled', 'disabled');
+    }
+  });
+
+  $('#decrement-degree').click(function() {
+    if (modelDegree > 0) {
+      $('#increment-degree').removeAttr('disabled');
+      modelDegree -= 1;
+      updateModelDegree();
+    }
+    if (modelDegree == 0) {
+      $('#decrement-degree').attr('disabled', 'disabled');
+    }
+  });
+
+  function updateModelDegree() {
+    $('#model-degree-display').text(modelDegree);
+
     var coefficients = generateFit();
-    console.log(coefficients);
+    // console.log(coefficients);
     plotFit(trainMain, data.trainPoints, coefficients);
     plotFit(testMain, data.testPoints, coefficients);
-    $('#train-err').text(rmsError(coefficients,
-      data.trainPoints.xdata, data.trainPoints.ydata));
-    $('#test-err').text(rmsError(coefficients,
-      data.testPoints.xdata, data.testPoints.ydata));
-  });
+
+    trainError = rmsError(coefficients,
+      data.trainPoints.xdata, data.trainPoints.ydata);
+    $('#train-err').text(trainError.toPrecision(3));
+    errors.trainErrors[modelDegree] = trainError;
+
+    testError = rmsError(coefficients,
+      data.testPoints.xdata, data.testPoints.ydata);
+    $('#test-err').text(testError.toPrecision(3));
+    errors.testErrors[modelDegree] = testError;
+
+    updateErrorsPlot();
+  }
 
   // Normal random
   function random_normal(mean, variance) {
     var normalFn = d3.random.normal(mean, variance);
     return normalFn();
   }
+
 });
