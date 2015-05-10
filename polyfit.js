@@ -1,7 +1,7 @@
 $(function() {
 
   // Number of data points
-  var MAX_MODEL_DEGREE = 8;
+  var MAX_MODEL_DEGREE = 7;
 
   var $degree = $('#degree');
   var degree = parseInt($degree.val(), 10);
@@ -80,8 +80,8 @@ $(function() {
 
   resetPoints();
 
-  function generateParams() {
-    var K = 3;
+  function generateParams(numPoints) {
+    var K = 5;
     var a = [];
     var w = [];
     var theta = [];
@@ -97,7 +97,7 @@ $(function() {
       w : w,
       theta : theta,
       sign : sign,
-      variance : Math.pow(randomness, 1) / 500
+      variance : Math.pow(randomness + numPoints, 1) / 500
     }
   }
 
@@ -153,8 +153,8 @@ $(function() {
     // Arbitrarily chosen variance and percentageClusteredPoints
     // There is no signficance behind the constants except that they looked good
     // with the slider.
-    var params = generateParams();
     var numPoints = parseInt($('#num-points').val(), 10);
+    var params = generateParams(numPoints);
     data.trainPoints = generateData(params, numPoints);
     data.testPoints = generateData(params, numPoints);
     errors = {
@@ -166,7 +166,18 @@ $(function() {
     resetPlot(testMain, data.testPoints.xdata, data.testPoints.ydata);
 
     modelDegree = 0;
+    $('#increment-degree').removeAttr('disabled');
+  $('#decrement-degree').attr('disabled', 'disabled');
+
     updateModelDegree();
+  }
+
+  function getFlotData(xdata, ydata) {
+    flotData = [];
+    for (var i = 0; i < xdata.length; i++) {
+      flotData.push([xdata[i], ydata[i]]);
+    }
+    return flotData;
   }
 
   function resetPlot(main, xdata, ydata) {
@@ -206,7 +217,6 @@ $(function() {
   }
 
   function updateErrorsPlot() {
-    console.log(errors);
     var trainErrorsData = getErrorsData(errors.trainErrors);
     var testErrorsData = getErrorsData(errors.testErrors);
     var data = [
@@ -227,6 +237,10 @@ $(function() {
       xaxis: {
         min: 0,
         max: MAX_MODEL_DEGREE
+      },
+      yaxis: {
+        min: 0,
+        max: 0.5
       }
     };
     var plot = $.plot(errorsPlot, data, options)
@@ -247,10 +261,20 @@ $(function() {
     return backslash(A, data.trainPoints.ydata);
   }
 
-  function plotFit(main, points, coefficients) {
-    main.selectAll('path.regression-path').remove();
+  function plotFit2(main, points, coefficients) {
+    var fitData = [];
     var xmin = d3.min(points.xdata);
     var xmax = d3.max(points.xdata);
+    for (var x = xmin; x < xmax; x += 0.01) {
+      var ydata = yHat(xdata, coefficients);
+      fitData.push([x, ydata]);
+    }
+  }
+
+  function plotFit(main, points, coefficients) {
+    main.selectAll('path.regression-path').remove();
+    var xmin = 0
+    var xmax = 1
     var xdata = [];
     for (var x = xmin; x < xmax; x += 0.01) {
       xdata.push(x);
@@ -315,7 +339,6 @@ $(function() {
     }
   }
 
-  // Helper functions
   $('.new-points').click(function() {
     resetPoints();
     $('#train-err').text('N/A');
@@ -323,22 +346,18 @@ $(function() {
   });
 
   $('#increment-degree').click(function() {
-    if (modelDegree < MAX_MODEL_DEGREE) {
-      $('#decrement-degree').removeAttr('disabled');
-      modelDegree += 1;
-      updateModelDegree();
-    }
+    $('#decrement-degree').removeAttr('disabled');
+    modelDegree += 1;
+    updateModelDegree();
     if (modelDegree == MAX_MODEL_DEGREE) {
       $('#increment-degree').attr('disabled', 'disabled');
     }
   });
 
   $('#decrement-degree').click(function() {
-    if (modelDegree > 0) {
-      $('#increment-degree').removeAttr('disabled');
-      modelDegree -= 1;
-      updateModelDegree();
-    }
+    $('#increment-degree').removeAttr('disabled');
+    modelDegree -= 1;
+    updateModelDegree();
     if (modelDegree == 0) {
       $('#decrement-degree').attr('disabled', 'disabled');
     }
