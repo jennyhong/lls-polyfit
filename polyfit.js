@@ -1,13 +1,11 @@
 $(function() {
-
-  // Number of data points
   var MAX_MODEL_DEGREE = 7;
-
-  var $degree = $('#degree');
-  var degree = parseInt($degree.val(), 10);
-
   var modelDegree = 0;
   $('#decrement-degree').attr('disabled', 'disabled');
+
+  var MIN_NUM_POINTS = 5;
+  var MAX_NUM_POINTS = 30;
+  var numPoints = parseInt($('#num-points').text(), 10);
 
   var $noiseSlider = $('#noise-slider');
 
@@ -74,7 +72,7 @@ $(function() {
       // Update the randomness after the user drags the slider
       // and reset the points to be clustered
       randomness = value;
-      // resetPoints();
+      resetPoints();
     }
   });
 
@@ -153,7 +151,7 @@ $(function() {
     // Arbitrarily chosen variance and percentageClusteredPoints
     // There is no signficance behind the constants except that they looked good
     // with the slider.
-    var numPoints = parseInt($('#num-points').val(), 10);
+    var numPoints = parseInt($('#num-points').text(), 10);
     var params = generateParams(numPoints);
     data.trainPoints = generateData(params, numPoints);
     data.testPoints = generateData(params, numPoints);
@@ -165,9 +163,10 @@ $(function() {
     resetPlot(trainMain, data.trainPoints.xdata, data.trainPoints.ydata);
     resetPlot(testMain, data.testPoints.xdata, data.testPoints.ydata);
 
+    // Reset model degree
     modelDegree = 0;
     $('#increment-degree').removeAttr('disabled');
-  $('#decrement-degree').attr('disabled', 'disabled');
+    $('#decrement-degree').attr('disabled', 'disabled');
 
     updateModelDegree();
   }
@@ -361,6 +360,26 @@ $(function() {
     if (modelDegree == 0) {
       $('#decrement-degree').attr('disabled', 'disabled');
     }
+  });
+
+  $('#increment-num-points').click(function() {
+    $('#decrement-num-points').removeAttr('disabled');
+    numPoints += 5;
+    $('#num-points').text(numPoints);
+    if (numPoints == MAX_NUM_POINTS) {
+      $('#increment-num-points').attr('disabled', 'disabled');
+    }
+    resetPoints();
+  });
+
+  $('#decrement-num-points').click(function() {
+    $('#increment-num-points').removeAttr('disabled');
+    numPoints -= 5;
+    $('#num-points').text(numPoints);
+    if (numPoints == MIN_NUM_POINTS) {
+      $('#decrement-num-points').attr('disabled', 'disabled');
+    }
+    resetPoints();
   });
 
   function updateModelDegree() {

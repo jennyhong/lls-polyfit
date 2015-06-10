@@ -14,18 +14,15 @@
 </head>
 <body>
   <div class='container'>
-
     <div class='row col-xs-10'>
       <h1>Polynomial Data Fitting</h1>
-      <br/>
+      <!-- <br/> -->
       <!-- We should link to a page with an explanation: We get two sets of data points called train and test. We use the training data to fit a polynomial of a given degree by least squares. We evaluate the polynomial on the test data. If the test error is much bigger than the trianing error, you have overfit. The polynomial degree is too high. If they're about the same, then ______ -->
       <!--       <div class='col-xs-4'>
         We can estimate data using a function of the form $f(x) = \theta_0 + \theta_1 x + \ldots + \theta_n x^n$. Here, the parameters $\theta_0, \ldots, \theta_n$ are estimated using least-squares data fitting. In this visualization, you choose the polynomial degree $n$, and the model is evaluated on a training data set (shown to the left) and a testing data set (not shown).
       </div> -->
       <!-- A polynomial of fixed degree is fit using the training data. We judge the model by its ability to predict the test set. -->
     </div>
-
-    
 
     <div class='row col-s-13'>
       <div class='col-xs-4'>
@@ -50,23 +47,25 @@
 
     <div class='row'>
       <div class='col-xs-3'>
-        <div class='input'>Number of points</div>: <input id='num-points' type='text' value='20'>
-        <br />
-        Noise <div class='range-slider' id='noise-slider'></div>
+        <h4>Data</h4>
+        <a class='btn btn-success' id='increment-num-points'>&#x25B2;</a>
+        <a class='btn btn-success' id='decrement-num-points'>&#x25BC;</a>
+        <div class='input'>Number of points</div>: <span id='num-points'>20</span>
+        <br /><br />
+        <div class='range-slider' id='noise-slider'></div> Noise
         <br />
         <a class='new-points btn btn-danger'>New data</a>
       </div>
 
       <div class='col-xs-3'>
-        <div class='input'>Degree</div>: <span id='model-degree-display'>0</span>
-        <br />
+        <h4>Model</h4>
         <a class='btn btn-success' id='increment-degree'>&#x25B2;</a>
         <a class='btn btn-success' id='decrement-degree'>&#x25BC;</a>
+        <div class='input'>Degree</div>: <span id='model-degree-display'>0</span>
         </div>
       </div>
     </div>
 
-  </div>
     <footer>
       Made by <a href='http://www.stanford.edu/~jyunhong'>Jenny Hong</a> for <a href='http://ee103.stanford.edu/'>EE103</a>. Source code on <a href='https://github.com/jennyhong/lls-polyfit'>Github</a>.
     </footer>
